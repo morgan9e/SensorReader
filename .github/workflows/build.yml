@@ -32,6 +32,7 @@ jobs:
           -scheme EnvSensorReader \
           -sdk iphoneos \
           -configuration Release \
+          -derivedDataPath ./build \
           CODE_SIGN_IDENTITY="" \
           CODE_SIGNING_REQUIRED=NO \
           CODE_SIGNING_ALLOWED=NO \
@@ -44,6 +45,7 @@ jobs:
           -scheme EnvSensorReader \
           -sdk iphonesimulator \
           -configuration Release \
+          -derivedDataPath ./build \
           CODE_SIGN_IDENTITY="" \
           CODE_SIGNING_REQUIRED=NO \
           CODE_SIGNING_ALLOWED=NO \
@@ -53,12 +55,19 @@ jobs:
       if: success()
       run: |
         mkdir -p artifacts
-        if [ -d "build/Release-iphoneos" ]; then
-          cp -R build/Release-iphoneos artifacts/ || true
+        # Copy device build
+        if [ -d "build/Build/Products/Release-iphoneos" ]; then
+          echo "Copying iOS device build..."
+          cp -R build/Build/Products/Release-iphoneos artifacts/
         fi
-        if [ -d "build/Release-iphonesimulator" ]; then
-          cp -R build/Release-iphonesimulator artifacts/ || true
+        # Copy simulator build
+        if [ -d "build/Build/Products/Release-iphonesimulator" ]; then
+          echo "Copying iOS simulator build..."
+          cp -R build/Build/Products/Release-iphonesimulator artifacts/
         fi
+        # List what we got
+        echo "Artifacts directory contents:"
+        ls -la artifacts/
 
     - name: Upload build artifacts
       if: success()
