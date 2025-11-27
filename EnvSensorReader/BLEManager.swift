@@ -7,19 +7,14 @@ class BLEManager: NSObject, ObservableObject {
     @Published var isScanning = false
     @Published var bluetoothState: CBManagerState = .unknown
     @Published var discoveredDevices: Set<String> = []
+    @Published var allowedUUIDs: Set<String> = []
+    @Published var discoveryMode = false
 
     private var centralManager: CBCentralManager!
     private var seenNonces: Set<String> = []
 
     // Configuration
     private let companyID: UInt16 = 0xFFFF
-
-    // Optional: Set specific UUIDs to filter. Empty = accept all devices with correct company ID
-    // Example: ["12345678-1234-1234-1234-123456789ABC"]
-    var allowedUUIDs: Set<String> = []
-
-    // Set to true to show all devices regardless of company ID (for discovery)
-    var discoveryMode = false
 
     override init() {
         super.init()

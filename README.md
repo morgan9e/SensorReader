@@ -4,18 +4,29 @@ An iOS application for scanning and reading environmental sensor data from BLE d
 
 ## Features
 
-- Real-time BLE scanning for EnvSensor devices
-- Displays environmental readings:
+- **Real-time BLE scanning** for EnvSensor devices
+- **Environmental readings display:**
   - Temperature (°C)
   - Humidity (%)
   - Pressure (hPa)
-- Displays power metrics:
+- **Power metrics display:**
   - Voltage (V)
   - Current (mA)
   - Power (mW)
-- Shows signal strength (RSSI in dBm)
-- Automatic deduplication of readings based on nonce
-- Clean, modern SwiftUI interface
+- **Device Management:**
+  - UUID-based device filtering (iOS doesn't expose MAC addresses)
+  - Discovered devices list
+  - Optional device whitelist
+  - Discovery mode for debugging
+- **Visual Features:**
+  - Signal strength indicator (RSSI in dBm)
+  - Color-coded RSSI display
+  - Card-based UI with borders and shadows
+  - Dark/Light mode support
+- **Smart Features:**
+  - Automatic deduplication of readings based on nonce
+  - Keeps last 100 readings
+  - Company ID filtering (0xFFFF)
 
 ## Requirements
 
@@ -23,12 +34,26 @@ An iOS application for scanning and reading environmental sensor data from BLE d
 - iPhone or iPad with Bluetooth LE support
 - Xcode 15.0 or later (for building)
 
+## Device Filtering
+
+**Note:** iOS does not expose Bluetooth MAC addresses for privacy reasons. Instead, the app uses device UUIDs which are assigned by iOS.
+
+### How to Filter Devices
+
+1. **Start scanning** - The app will show all devices with Company ID `0xFFFF`
+2. **Open Settings** - Tap the gear icon in the top-right
+3. **View discovered devices** - All found devices are listed with their UUIDs
+4. **Add to filter** - Tap "Add" next to any device to whitelist it
+5. **Manual entry** - You can also manually enter UUIDs in the format `12345678-1234-1234-1234-123456789ABC`
+
+When the whitelist is empty, all devices with the correct Company ID are shown. When you add devices to the whitelist, only those specific devices will display readings.
+
 ## BLE Protocol
 
 The app scans for BLE devices with the following characteristics:
 
-- **Device Name**: `EnvSensor`
-- **Company ID**: `0xFFFF`
+- **Company ID**: `0xFFFF` (required)
+- **Device Name**: Optional, not used for filtering
 - **Data Format** (16 bytes, little-endian):
   - Bytes 0-1: Nonce (UInt16)
   - Bytes 2-3: Temperature (Int16, divide by 100 for °C)

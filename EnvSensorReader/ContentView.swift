@@ -48,6 +48,8 @@ struct ContentView: View {
                         SensorReadingRow(reading: reading)
                     }
                     .listStyle(.plain)
+                    .background(Color(.systemGroupedBackground))
+                    .scrollContentBackground(.hidden)
                 }
 
                 // Start/Stop button
@@ -63,6 +65,7 @@ struct ContentView: View {
                 .padding()
                 .disabled(bleManager.bluetoothState != .poweredOn)
             }
+            .background(Color(.systemGroupedBackground))
             .navigationTitle("EnvSensor Reader")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -234,7 +237,21 @@ struct SensorReadingRow: View {
                     .font(.system(.body, design: .monospaced))
             }
         }
-        .padding(.vertical, 8)
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.secondarySystemGroupedBackground))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .strokeBorder(Color.blue.opacity(0.4), lineWidth: 2.5)
+        )
+        .shadow(color: Color.black.opacity(0.15), radius: 5, x: 0, y: 3)
+        .padding(.vertical, 6)
+        .padding(.horizontal, 12)
+        .listRowInsets(EdgeInsets())
+        .listRowSeparator(.hidden)
+        .listRowBackground(Color.clear)
     }
 
     private func rssiColor(_ rssi: Int) -> Color {
