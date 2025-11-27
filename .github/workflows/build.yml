@@ -25,9 +25,16 @@ jobs:
     - name: Show available SDKs
       run: xcodebuild -showsdks
 
-    - name: Build iOS App
+    - name: Clean build directory
       run: |
-        xcodebuild clean build \
+        xcodebuild clean \
+          -project EnvSensorReader.xcodeproj \
+          -scheme EnvSensorReader \
+          -derivedDataPath ./build
+
+    - name: Build for iOS Device
+      run: |
+        xcodebuild build \
           -project EnvSensorReader.xcodeproj \
           -scheme EnvSensorReader \
           -sdk iphoneos \
@@ -40,7 +47,7 @@ jobs:
 
     - name: Build for iOS Simulator
       run: |
-        xcodebuild clean build \
+        xcodebuild build \
           -project EnvSensorReader.xcodeproj \
           -scheme EnvSensorReader \
           -sdk iphonesimulator \
