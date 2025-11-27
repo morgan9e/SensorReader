@@ -44,12 +44,20 @@ struct ContentView: View {
                     }
                     Spacer()
                 } else {
-                    List(bleManager.readings) { reading in
-                        SensorReadingRow(reading: reading)
+                    if #available(iOS 16.0, *) {
+                        List(bleManager.readings) { reading in
+                            SensorReadingRow(reading: reading)
+                        }
+                        .listStyle(.plain)
+                        .background(Color(.systemGroupedBackground))
+                        .scrollContentBackground(.hidden)
+                    } else {
+                        List(bleManager.readings) { reading in
+                            SensorReadingRow(reading: reading)
+                        }
+                        .listStyle(.plain)
+                        .background(Color(.systemGroupedBackground))
                     }
-                    .listStyle(.plain)
-                    .background(Color(.systemGroupedBackground))
-                    .scrollContentBackground(.hidden)
                 }
 
                 // Start/Stop button
