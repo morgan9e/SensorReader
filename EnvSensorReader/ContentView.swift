@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject private var bleManager = BLEManager()
+    @State private var showSettings = false
 
     var body: some View {
         NavigationView {
@@ -64,6 +65,30 @@ struct ContentView: View {
             }
             .navigationTitle("EnvSensor Reader")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        showSettings = true
+                    }) {
+                        Image(systemName: "gearshape")
+                    }
+                }
+
+                ToolbarItem(placement: .navigationBarLeading) {
+                    if !bleManager.discoveredDevices.isEmpty {
+                        HStack(spacing: 4) {
+                            Image(systemName: "antenna.radiowaves.left.and.right")
+                                .font(.caption)
+                            Text("\(bleManager.discoveredDevices.count)")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+            }
+            .sheet(isPresented: $showSettings) {
+                SettingsView(bleManager: bleManager)
+            }
         }
     }
 

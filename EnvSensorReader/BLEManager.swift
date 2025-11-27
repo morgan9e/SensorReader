@@ -6,12 +6,20 @@ class BLEManager: NSObject, ObservableObject {
     @Published var readings: [SensorReading] = []
     @Published var isScanning = false
     @Published var bluetoothState: CBManagerState = .unknown
+    @Published var discoveredDevices: Set<String> = []
 
     private var centralManager: CBCentralManager!
     private var seenNonces: Set<String> = []
 
-    private let deviceName = "EnvSensor"
+    // Configuration
     private let companyID: UInt16 = 0xFFFF
+
+    // Optional: Set specific UUIDs to filter. Empty = accept all devices with correct company ID
+    // Example: ["12345678-1234-1234-1234-123456789ABC"]
+    var allowedUUIDs: Set<String> = []
+
+    // Set to true to show all devices regardless of company ID (for discovery)
+    var discoveryMode = false
 
     override init() {
         super.init()
@@ -88,14 +96,15 @@ extension BLEManager: CBCentralManagerDelegate {
     }
 
     func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String: Any], rssi RSSI: NSNumber) {
-        // Check device name
-        guard let name = peripheral.name, name == deviceName else {
-            return
-        }
+        let deviceUUID = peripheral.identifier.uuidString
 
         // Check for manufacturer data
         guard let manufacturerData = advertisementData[CBAdvertisementDataManufacturerDataKey] as? Data,
               manufacturerData.count >= 2 else {
+            // In discovery mode, log devices without manufacturer data
+            if discoveryMode {
+                print("Device without manufacturer data: \(deviceUUID) (\(peripheral.name ?? "Unknown"))")
+            }
             return
         }
 
@@ -103,7 +112,23 @@ extension BLEManager: CBCentralManagerDelegate {
         let companyIDBytes = manufacturerData.prefix(2)
         let extractedCompanyID = UInt16(companyIDBytes[0]) | (UInt16(companyIDBytes[1]) << 8)
 
+        // In discovery mode, log all devices with their company IDs
+        if discoveryMode {
+            print("Discovered: \(deviceUUID) (\(peripheral.name ?? "Unknown")) - Company ID: 0x\(String(format: "%04X", extractedCompanyID))")
+        }
+
+        // Filter by company ID
         guard extractedCompanyID == companyID else {
+            return
+        }
+
+        // Add to discovered devices
+        DispatchQueue.main.async {
+            self.discoveredDevices.insert(deviceUUID)
+        }
+
+        // Filter by UUID whitelist if configured
+        if !allowedUUIDs.isEmpty && !allowedUUIDs.contains(deviceUUID) {
             return
         }
 
@@ -115,7 +140,7 @@ extension BLEManager: CBCentralManagerDelegate {
         }
 
         // Create unique key for deduplication
-        let key = "\(peripheral.identifier.uuidString)-\(parsed.nonce)"
+        let key = "\(deviceUUID)-\(parsed.nonce)"
         guard !seenNonces.contains(key) else {
             return
         }
@@ -143,7 +168,8 @@ extension BLEManager: CBCentralManagerDelegate {
             }
         }
 
-        print("[\(reading.timestampString)] (\(String(format: "%04X", parsed.nonce))) \(peripheral.identifier.uuidString)")
+        let deviceName = peripheral.name ?? "Unknown"
+        print("[\(reading.timestampString)] (\(String(format: "%04X", parsed.nonce))) \(deviceUUID) (\(deviceName))")
         print("  T=\(String(format: "%5.1f", parsed.temp))°C  H=\(String(format: "%5.1f", parsed.hum))%  P=\(String(format: "%7.1f", parsed.pres))hPa")
         print("  V=\(String(format: "%5.2f", parsed.voltage))V  I=\(String(format: "%7.2f", parsed.current))mA  P=\(String(format: "%7.2f", reading.power))mW")
         print("  RSSI=\(String(format: "%3d", RSSI.intValue))dBm")
