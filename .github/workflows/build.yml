@@ -25,25 +25,41 @@ jobs:
     - name: Show available SDKs
       run: xcodebuild -showsdks
 
-    - name: Clean build directory
+    - name: Create Archive for iOS Device
       run: |
-        xcodebuild clean \
-          -project EnvSensorReader.xcodeproj \
-          -scheme EnvSensorReader \
-          -derivedDataPath ./build
-
-    - name: Build for iOS Device
-      run: |
-        xcodebuild build \
+        xcodebuild archive \
           -project EnvSensorReader.xcodeproj \
           -scheme EnvSensorReader \
           -sdk iphoneos \
           -configuration Release \
-          -derivedDataPath ./build \
+          -archivePath ./build/EnvSensorReader.xcarchive \
           CODE_SIGN_IDENTITY="" \
           CODE_SIGNING_REQUIRED=NO \
           CODE_SIGNING_ALLOWED=NO \
           ONLY_ACTIVE_ARCH=NO
+
+    - name: Export IPA
+      run: |
+        xcodebuild -exportArchive \
+          -archivePath ./build/EnvSensorReader.xcarchive \
+          -exportPath ./build/ipa \
+          -exportOptionsPlist ExportOptions.plist \
+          -allowProvisioningUpdates || true
+
+    - name: Create IPA manually if export failed
+      if: always()
+      run: |
+        mkdir -p ./build/ipa
+        if [ -d "./build/EnvSensorReader.xcarchive/Products/Applications/EnvSensorReader.app" ]; then
+          echo "Creating IPA manually from archive..."
+          mkdir -p ./build/ipa/Payload
+          cp -R ./build/EnvSensorReader.xcarchive/Products/Applications/EnvSensorReader.app ./build/ipa/Payload/
+          cd ./build/ipa
+          zip -r EnvSensorReader.ipa Payload
+          rm -rf Payload
+          cd ../..
+          echo "IPA created manually"
+        fi
 
     - name: Build for iOS Simulator
       run: |
@@ -62,19 +78,32 @@ jobs:
       if: success()
       run: |
         mkdir -p artifacts
-        # Copy device build
-        if [ -d "build/Build/Products/Release-iphoneos" ]; then
-          echo "Copying iOS device build..."
-          cp -R build/Build/Products/Release-iphoneos artifacts/
+
+        # Copy IPA if it exists
+        if [ -f "build/ipa/EnvSensorReader.ipa" ]; then
+          echo "Copying IPA..."
+          cp build/ipa/EnvSensorReader.ipa artifacts/
         fi
+
+        # Copy xcarchive
+        if [ -d "build/EnvSensorReader.xcarchive" ]; then
+          echo "Copying xcarchive..."
+          cp -R build/EnvSensorReader.xcarchive artifacts/
+        fi
+
         # Copy simulator build
         if [ -d "build/Build/Products/Release-iphonesimulator" ]; then
           echo "Copying iOS simulator build..."
           cp -R build/Build/Products/Release-iphonesimulator artifacts/
         fi
+
         # List what we got
         echo "Artifacts directory contents:"
-        ls -la artifacts/
+        ls -lah artifacts/
+        if [ -d "artifacts/EnvSensorReader.xcarchive" ]; then
+          echo "xcarchive contents:"
+          ls -lah artifacts/EnvSensorReader.xcarchive/Products/Applications/ || true
+        fi
 
     - name: Upload build artifacts
       if: success()
