@@ -114,7 +114,7 @@ jobs:
         retention-days: 30
 
     - name: Upload IPA file
-      if: success() && exists('build/ipa/EnvSensorReader.ipa')
+      if: success()
       uses: actions/upload-artifact@v4
       with:
         name: ipa
