@@ -14,7 +14,7 @@ class BLEManager: NSObject, ObservableObject {
     private var seenNonces: Set<String> = []
 
     // Configuration
-    private let companyID: UInt16 = 0xCDAB
+    private let companyID: UInt16 = 0xABCD
 
     override init() {
         super.init()
